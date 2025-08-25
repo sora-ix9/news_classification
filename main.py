@@ -1,19 +1,22 @@
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from typing import Annotated
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from joblib import load
+import sklearn
 import os
 from random import choice, choices
 from ordered_set import OrderedSet
-from math import floor
 import http.client, urllib.parse
 import json
 import time
 
-# Initial set-up for FastAPI
+# Initial set-up for rest api using FastAPI
 app = FastAPI()
-app.mount('/', StaticFiles(directory='static', html=True), name='static')
+app.mount('/static', StaticFiles(directory='static', html=True), name='static')
+templates = Jinja2Templates(directory='templates')
 
 # Initial set-up for the get_news() function
 API_KEY = os.environ.get('MEDIASTACK_API_KEY')
@@ -57,10 +60,10 @@ def get_cats_2_NewsNums(news_num, unique_cats, debug=False):
 
 def get_randNews(news_num, debug=False):
     news_cats = ['business', 'entertainment', 'health', 'science', 'sports', 'technology']
-    # nRand_news_cats = choices(news_cats, k=news_num)
+    nRand_news_cats = choices(news_cats, k=news_num)
 
     # nRand_news_cats = ['business', 'entertainment', 'health'] 
-    nRand_news_cats = ['technology', 'business', 'sports', 'science']
+    # nRand_news_cats = ['technology', 'business', 'sports', 'science']
 
     nRand_news_cats.sort() # Ascendingly sort the 'nRand_news_cats' in-place
     unique_cats = list(OrderedSet(nRand_news_cats))
@@ -96,7 +99,15 @@ def get_randNews(news_num, debug=False):
 
             json_res_lst.append(json_res)
             if 'data' in json_res:
-                randNews_lst.extend(json_res['data']) # 'randNews_lst' would store all request news roughly like [{'author': ..., ..., 'published_at': ...}, ..., {'author': ..., ..., 'published_at': ...}].
+                json_news = json_res['data']
+                # randNews_lst.extend(json_res['data']) # 'randNews_lst' stores all request news and would roughly has structure like [{'author': ..., ..., 'published_at': ...}, ..., {'author': ..., ..., 'published_at': ...}].
+
+                for news in json_news:
+                    randNews_lst.append({
+                        'news': news['title'] + '. ' + news['description'],
+                        'auctual_category': news['category'], 
+                        'predicted_category': None,
+                        }) # 'randNews_lst' stores dictionaries of all news, where each has structure like this {'news': ..., 'auctual_category': ..., 'predicted_category': None}
             if 'error' in json_res:
                 errors.extend(json_res['error'])
 
@@ -112,6 +123,11 @@ def get_randNews(news_num, debug=False):
         if (unique_cat == last_unique_cat) and (len(randNews_lst) != news_num):
 
             for news in randNews_lst:
+                print('----------------- Debug in the block for requrying unrecieved news ------------------')
+                print('randNews_lst =', randNews_lst)
+                print()
+                print('news =', news)
+                print('-------------------------------------------------------------------------------------')
                 cat_key = news['category']
                 cats_2_newsNums[cat_key] -= 1 # Decrease the number of the already recieved news 1 by 1
 
@@ -140,21 +156,29 @@ def get_randNews(news_num, debug=False):
 
     return randNews_lst
 
-'''
-def classify_news():
-    model = load('best_logit_clf2.joblib')
-
-    return 
-'''
+def classify_news(randNews_lst):
+    tfidf_transformer = load('files_4_classification/tfidf_transformer.joblib')
+    label_encoder = load('files_4_classification/label_encoder.joblib')
+    model = load('files_4_classification/best_logit_clf2.joblib')
+    news_lst = [news_dct['news'] for news_dct in randNews_lst]
     
-'''
-@app.get('/')
-def index():
-    return FileResponse('static\index.html')
-'''
+    prep_data = tfidf_transformer.transform(news_lst)
+    preds = model.predict(prep_data)
 
-# @app.post('/searched_news'):
-def searched_news():
-    randNews_lst = get_randNews()
+    for ind in range(len(preds)):
+        pred_cat = label_encoder.classes_[preds[ind]]
+        randNews_lst[ind]['predicted_category'] = pred_cat
 
-    # return
+    return randNews_lst
+    
+@app.get('/', response_class=HTMLResponse)
+def index(request: Request):
+    return templates.TemplateResponse(request=request, name='index.html')
+
+@app.post('/classified_news', response_class=HTMLResponse)
+def classified_news(request: Request, news_num: Annotated[str, Form()]):
+    news_num = int(news_num)
+    randNews_lst = get_randNews(news_num) # 'randNews_lst' stores dictionaries of all news, where each has structure like this {'news': ..., 'auctual_category': ..., 'predicted_category': None}
+    classified_news_lst = classify_news(randNews_lst) # From this line, each news dictionary in 'classified_news_lst' would finally have the actual value at the 'predicted_category' key which is unequivalent to the None value.
+
+    return templates.TemplateResponse(request=request, name='classified_news.html', context={'classified_news': classified_news_lst})
