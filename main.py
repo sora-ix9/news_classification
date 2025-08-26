@@ -61,10 +61,6 @@ def get_cats_2_NewsNums(news_num, unique_cats, debug=False):
 def get_randNews(news_num, debug=False):
     news_cats = ['business', 'entertainment', 'health', 'science', 'sports', 'technology']
     nRand_news_cats = choices(news_cats, k=news_num)
-
-    # nRand_news_cats = ['business', 'entertainment', 'health'] 
-    # nRand_news_cats = ['technology', 'business', 'sports', 'science']
-
     nRand_news_cats.sort() # Ascendingly sort the 'nRand_news_cats' in-place
     unique_cats = list(OrderedSet(nRand_news_cats))
     randNews_lst = []
@@ -72,12 +68,13 @@ def get_randNews(news_num, debug=False):
     json_res_lst = [] # For later logging/debugging
 
     # Determine equal number used to get news for every unique category
-    cats_2_newsNums = get_cats_2_NewsNums(news_num, unique_cats, debug=True)
+    cats_2_newsNums = get_cats_2_NewsNums(news_num, unique_cats)
 
-    # Actual request news
+    # Requesting news
     unique_cat_ind = 0
     unique_cat_num = len(unique_cats)
     last_unique_cat = unique_cats[-1]
+    curNewsAPI_sent_num = unique_cat_num
     while unique_cat_ind < unique_cat_num:
         unique_cat = unique_cats[unique_cat_ind]
         request_news_num = cats_2_newsNums[unique_cat]
@@ -104,7 +101,7 @@ def get_randNews(news_num, debug=False):
 
                 for news in json_news:
                     randNews_lst.append({
-                        'news': news['title'] + '. ' + news['description'],
+                        'news': (news['title'] + '. ' + news['description']).replace('&nbsp;', ' '),
                         'auctual_category': news['category'], 
                         'predicted_category': None,
                         }) # 'randNews_lst' stores dictionaries of all news, where each has structure like this {'news': ..., 'auctual_category': ..., 'predicted_category': None}
@@ -117,26 +114,25 @@ def get_randNews(news_num, debug=False):
                     
             continue
 
-        unique_cat_ind += 1
-
         # Section that is responsible for requrying unrecieved news
         if (unique_cat == last_unique_cat) and (len(randNews_lst) != news_num):
 
             for news in randNews_lst:
-                print('----------------- Debug in the block for requrying unrecieved news ------------------')
-                print('randNews_lst =', randNews_lst)
-                print()
                 print('news =', news)
-                print('-------------------------------------------------------------------------------------')
-                cat_key = news['category']
+                cat_key = news['auctual_category']
                 cats_2_newsNums[cat_key] -= 1 # Decrease the number of the already recieved news 1 by 1
 
                 # If any category already recieved all news, then remove the category out from the 'unique_cats' and 'cats_2_newsNums' variables. 
                 if cats_2_newsNums[cat_key] == 0:
                     unique_cats.remove(cat_key)
                     cats_2_newsNums.pop(cat_key)
-
+                
+            unique_cat_ind = 0
+            unique_cat_num = len(unique_cats)
+            print('unique_cats =', unique_cats)
             continue
+
+        unique_cat_ind += 1
 
     if debug:
         print('-------------- Debug --------------------')
@@ -154,7 +150,7 @@ def get_randNews(news_num, debug=False):
 
         print('----------------------------------------')
 
-    return randNews_lst
+    return randNews_lst, curNewsAPI_sent_num # Return 'curNewsAPI_sent_num' for tracking the available count of news API request left for calling in future. 
 
 def classify_news(randNews_lst):
     tfidf_transformer = load('files_4_classification/tfidf_transformer.joblib')
@@ -178,7 +174,17 @@ def index(request: Request):
 @app.post('/classified_news', response_class=HTMLResponse)
 def classified_news(request: Request, news_num: Annotated[str, Form()]):
     news_num = int(news_num)
-    randNews_lst = get_randNews(news_num) # 'randNews_lst' stores dictionaries of all news, where each has structure like this {'news': ..., 'auctual_category': ..., 'predicted_category': None}
+    randNews_lst, curNewsAPI_sent_num = get_randNews(news_num) # 'randNews_lst' stores dictionaries of all news, where each has structure like this {'news': ..., 'auctual_category': ..., 'predicted_category': None}
     classified_news_lst = classify_news(randNews_lst) # From this line, each news dictionary in 'classified_news_lst' would finally have the actual value at the 'predicted_category' key which is unequivalent to the None value.
+
+    # Tracking available count for news API request (read and write it)
+    with open('logs/newsAPI_req_count.txt', 'r') as newsAPI_reqCount_f1:
+        newsAPI_reqCount_str1 = newsAPI_reqCount_f1.read() # E.g., newsAPI_reqCount_str1 looks like 'MEDIASTACK_API_KEY: 044' etc.
+        newsAPI_req_count = int(newsAPI_reqCount_str1[20: ]) + curNewsAPI_sent_num 
+        newsAPI_reqCount_str2 = newsAPI_reqCount_str1[0: 20] + str(newsAPI_req_count).zfill(3)
+
+        newsAPI_reqCount_f2 = open('logs/newsAPI_req_count.txt', 'w')
+        newsAPI_reqCount_f2.write(newsAPI_reqCount_str2)
+        print('newsAPI_req_count =', newsAPI_req_count)
 
     return templates.TemplateResponse(request=request, name='classified_news.html', context={'classified_news': classified_news_lst})
