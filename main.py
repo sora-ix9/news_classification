@@ -114,7 +114,7 @@ def get_randNews(news_num, debug=False):
                     
             continue
 
-        # Section that is responsible for requrying unrecieved news
+        # Section that is responsible for requerying unrecieved news
         if (unique_cat == last_unique_cat) and (len(randNews_lst) != news_num):
 
             for news in randNews_lst:
@@ -153,9 +153,9 @@ def get_randNews(news_num, debug=False):
     return randNews_lst, curNewsAPI_sent_num # Return 'curNewsAPI_sent_num' for tracking the available count of news API request left for calling in future. 
 
 def classify_news(randNews_lst):
-    tfidf_transformer = load('files_4_classification/tfidf_transformer.joblib')
-    label_encoder = load('files_4_classification/label_encoder.joblib')
-    model = load('files_4_classification/best_logit_clf2.joblib')
+    tfidf_transformer = load('ml_model_building/tfidf_transformer.joblib')
+    label_encoder = load('ml_model_building/label_encoder.joblib')
+    model = load('ml_model_building/best_logit_clf2.joblib')
     news_lst = [news_dct['news'] for news_dct in randNews_lst]
     
     prep_data = tfidf_transformer.transform(news_lst)
