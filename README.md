@@ -14,10 +14,10 @@ based-on title and short description.
   ![](https://github.com/sora-ix9/news_classification/blob/93205565c5e3155755b7043bf4811adbef4bfdda/ml_model_building/Models_VS_Weighted_F1.png)
 
 ## Screenshots
-![](https://github.com/sora-ix9/news_classification/blob/93205565c5e3155755b7043bf4811adbef4bfdda/screenshorts/Screenshot1.png)
+![](https://github.com/sora-ix9/news_classification/blob/c63c23ac0ac2396733ebf5882464b3bf1c4120e7/screenshorts/Screenshot1.png)
 
-![](https://github.com/sora-ix9/news_classification/blob/93205565c5e3155755b7043bf4811adbef4bfdda/screenshorts/Screenshot2.png)
+![](https://github.com/sora-ix9/news_classification/blob/c63c23ac0ac2396733ebf5882464b3bf1c4120e7/screenshorts/Screenshot2.png)
 
-![](https://github.com/sora-ix9/news_classification/blob/93205565c5e3155755b7043bf4811adbef4bfdda/screenshorts/Screenshot3.png)
+![](https://github.com/sora-ix9/news_classification/blob/c63c23ac0ac2396733ebf5882464b3bf1c4120e7/screenshorts/Screenshot3.png)
 
-![](https://github.com/sora-ix9/news_classification/blob/93205565c5e3155755b7043bf4811adbef4bfdda/screenshorts/Screenshot4.png)
+![](https://github.com/sora-ix9/news_classification/blob/c63c23ac0ac2396733ebf5882464b3bf1c4120e7/screenshorts/Screenshot4.png)
