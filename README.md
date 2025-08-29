@@ -1,4 +1,4 @@
-# News Classification Based-On Title and Short Description
+# News Classification Based-on Title and Short Description
 This project uses the [News Category Dataset](https://www.kaggle.com/datasets/rmisra/news-category-dataset) as the primary dataset to train logistic model enabling news classification 
 based-on title and short description.
 
