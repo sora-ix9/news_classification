@@ -14,10 +14,10 @@ based-on title and short description.
   ![](https://github.com/sora-ix9/news_classification/blob/93205565c5e3155755b7043bf4811adbef4bfdda/ml_model_building/Models_VS_Weighted_F1.png)
 
 ## Screenshots
-![](https://github.com/sora-ix9/news_classification/blob/80677ff588fb4c533ae967ce8e2667195221ba90/screenshorts/Screenshot1.png)
+![](./screenshots/Screenshot1.png)
 
-![](https://github.com/sora-ix9/news_classification/blob/80677ff588fb4c533ae967ce8e2667195221ba90/screenshorts/Screenshot2.png)
+![](./screenshots/Screenshot2.png)
 
-![](https://github.com/sora-ix9/news_classification/blob/80677ff588fb4c533ae967ce8e2667195221ba90/screenshorts/Screenshot3.png)
+![](./screenshots/Screenshot3.png)
 
-![](https://github.com/sora-ix9/news_classification/blob/80677ff588fb4c533ae967ce8e2667195221ba90/screenshorts/Screenshot4.png)
+![](./screenshots/Screenshot4.png)
